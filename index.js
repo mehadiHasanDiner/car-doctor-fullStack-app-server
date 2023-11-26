@@ -31,31 +31,69 @@ async function run() {
     const serviceCollection = client.db("carDoctor").collection("services");
     const bookingCollection = client.db("carDoctor").collection("bookings");
 
+    // load all services data from
     app.get("/services", async (req, res) => {
       const cursor = serviceCollection.find();
       const result = await cursor.toArray();
       res.send(result);
     });
 
-    // load single service
+    // load specific service (but not taking all of the specific service)
     app.get("/services/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
 
       const options = {
         // Include only the `title` and `imdb` fields in each returned document
-        projection: { title: 1, price: 1, service_id: 1 },
+        projection: { title: 1, price: 1, service_id: 1, img: 1 },
       };
 
       const result = await serviceCollection.findOne(query, options);
       res.send(result);
     });
 
-    // bookings
+    // inserting all service booking information to the service collection.
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
       console.log(booking);
       const result = await bookingCollection.insertOne(booking);
+      res.send(result);
+    });
+
+    // getting some data of the service collection database
+    app.get("/bookings", async (req, res) => {
+      console.log(req.query.email);
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email };
+      }
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // delete a single booking from the booking collection
+    app.delete("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookingCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // put = update & add
+    // patch = only update
+
+    // update a single booking from the booking collection
+    app.patch("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedBookings = req.body;
+      console.log(updatedBookings);
+      const updateDoc = {
+        $set: {
+          status: updatedBookings.status,
+        },
+      };
+      const result = await bookingCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
