@@ -25,23 +25,40 @@ const client = new MongoClient(uri, {
 });
 
 const verifyJWT = (req, res, next) => {
-  console.log(req.headers.authorization);
   const authorization = req.headers.authorization;
   if (!authorization) {
     return res
       .status(401)
-      .send({ error: true, message: "Invalid authorization" });
+      .send({ error: true, message: "unauthorized access" });
   }
   const token = authorization.split(" ")[1];
-  console.log("token inside authorization", token);
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
     if (error) {
-      return res.status(403).send({ error: true, message: "unauthorized" });
+      return res.send({ error: error, message: "unauthorized access" });
     }
     req.decoded = decoded;
     next();
   });
 };
+
+// const verifyJWT = (req, res, next) => {
+//   console.log(req.headers.authorization);
+//   const authorization = req.headers.authorization;
+//   if (!authorization) {
+//     return res
+//       .status(401)
+//       .send({ error: true, message: "Invalid authorization" });
+//   }
+//   const token = authorization.split(" ")[1];
+//   console.log("token inside authorization", token);
+//   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
+//     if (error) {
+//       return res.status(403).send({ error: true, message: "unauthorized" });
+//     }
+//     req.decoded = decoded;
+//     next();
+//   });
+// };
 
 async function run() {
   try {
@@ -93,8 +110,9 @@ async function run() {
 
     // getting some data of the service collection database
     app.get("/bookings", verifyJWT, async (req, res) => {
+      const decoded = req.decoded;
       // console.log(req.headers.authorization);
-      console.log("came back after verifying authorization");
+      console.log("came back after verifying authorization", decoded);
 
       let query = {};
       if (req.query?.email) {
